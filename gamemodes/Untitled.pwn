@@ -28,5 +28,5 @@ public OnGameModeInit(){
 	SendRconCommand("weburl orio-n.com");
 	SendRconCommand("language Russian");
 	SetGameModeText("Orio[N] RP/RPG");
-	return true;
+	return true; 
 }
