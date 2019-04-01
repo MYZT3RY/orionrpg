@@ -1,3 +1,5 @@
+// Orion RPG by d1maz.
+
 #include <a_samp>
 #include <a_mysql>
 
@@ -9,9 +11,21 @@
 #define MYSQL_PASSWORD ""
 new mysql_connection;
 
+// конфигурации.
+
+#undef MAX_PLAYERS
+#define MAX_PLAYERS 300
+
 main(){
 	print("Orio[N] RPG | copy by d1maz.");
 }
+
+enum sr{ 
+	id,
+	name[MAX_PLAYER_NAME],
+}
+
+new user[MAX_PLAYERS][sr];
 
 public OnGameModeInit(){
 	mysql_connection = mysql_connect(MYSQL_HOST,MYSQL_USER,MYSQL_DATABASE,MYSQL_PASSWORD);
@@ -29,4 +43,19 @@ public OnGameModeInit(){
 	SendRconCommand("language Russian");
 	SetGameModeText("Orio[N] RP/RPG");
 	return true; 
+}
+
+public OnPlayerConnect(playerid){
+	GetPlayerName(playerid,user[playerid][name],MAX_PLAYER_NAME);
+	new query[37-2+MAX_PLAYER_NAME];
+	mysql_format(mysql_connection,query,sizeof(query),"select`id`from`users`where`name`='%e'");
+	new Cache:cache_users=mysql_query(mysql_connection,query);
+	if(cache_get_row_count(mysql_connection)){
+		//авторизация
+	}
+	else{
+		//регистрация
+	}
+	cache_delete(cache_users,mysql_connection);
+	return true;
 }
