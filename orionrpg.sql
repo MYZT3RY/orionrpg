@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Хост: localhost
--- Время создания: Мар 31 2019 г., 17:15
+-- Время создания: Апр 10 2019 г., 09:19
 -- Версия сервера: 8.0.12
 -- Версия PHP: 7.2.11
 
@@ -31,7 +31,7 @@ SET time_zone = "+00:00";
 CREATE TABLE `users` (
   `id` int(11) NOT NULL,
   `name` varchar(24) NOT NULL,
-  `password` varchar(32) NOT NULL
+  `password` varchar(30) CHARACTER SET cp1251 COLLATE cp1251_general_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=cp1251;
 
 --
