@@ -25,6 +25,7 @@ new mysql_connection;
 #define BLUE "{3399cc}"
 #define GREY "{afafaf}"
 #define RED "{fb6146}"
+#define YELLOW "{ffff00}"
 
 #define C_GREY 0xAFAFAFAA
 
@@ -39,6 +40,7 @@ main(){
 enum sr{ 
 	id,
 	name[MAX_PLAYER_NAME],
+	email[32]
 }
 
 new user[MAX_PLAYERS][sr];
@@ -46,6 +48,7 @@ new user[MAX_PLAYERS][sr];
 enum dlgs{
 	NULL=0,
 	dRegistration,
+	dRegistrationEmail,
 	dAuthorization
 }
 
@@ -63,7 +66,7 @@ public OnGameModeInit(){
 	SendRconCommand("hostname Orio[N] RPG 2 (0.3.7) Rus/Ua");
 	SendRconCommand("weburl "SiteLink"");
 	SendRconCommand("language Russian");
-	SetGameModeText("Orio[N] RP/RPG v0.004r1");
+	SetGameModeText("Orio[N] RP/RPG v0.005r1");
 	return true; 
 }
 
@@ -110,6 +113,34 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]){
 					SendClientMessage(playerid,C_GREY,""RED"x"GREY" Длина пароля может быть от 6 до 30 символов.");
 					return true;
 				}
+				showEmailDialog(playerid);
+			}
+			else{
+				Kick(playerid);
+			}
+		}
+		case dRegistrationEmail:{
+			if(response){
+				new temp_email[128];
+				if(sscanf(inputtext,"s[128]",temp_email)){
+					showEmailDialog(playerid);
+					return true;
+				}
+				if(!regex_match(sscanf_email,"[a-zA-Z0-9_\\.-]{1,22}+@([a-zA-Z0-9\\-]{2,8}+\\.)+[a-zA-Z]{2,4}")){
+					showEmailDialog(playerid);
+					SendClientMessage(playerid,C_GREY,""RED"x"GREY" Некорректный EMail!");
+				    return true;
+				}
+				new query[42-2+32];
+				mysql_format(mysql_connection,query,sizeof(query),"select`email`from`users`where`email`='%e'",temp_email);
+				new Cache:cache_email=mysql_query(mysql_connection,query,true);
+				if(cache_get_row_count(mysql_connection)){					
+					showEmailDialog(playerid);
+					SendClientMessage(playerid,C_GREY,""RED"x"GREY" Такой Email уже используется на одном из аккаунтов! Укажи другой Email.");
+					return true;
+				}
+				cache_delete(cache_email,mysql_connection);
+				strmid(user[playerid][email],temp_email,0,strlen(temp_email));
 			}
 			else{
 				Kick(playerid);
@@ -123,4 +154,8 @@ showRegistrationDialog(playerid){
 	new string[166-2+MAX_PLAYER_NAME];
 	format(string,sizeof(string),""WHITE"Добро пожаловать на Orio[N] RPG!\n\n"GREEN"Никнейм - "WHITE"%s"GREEN" свободен и готов к регистрации.\n"WHITE"Придумайте пароль и введите егов поле ниже:",user[playerid][name]);
 	ShowPlayerDialog(playerid,dRegistration,DIALOG_STYLE_INPUT,"Регистрация",string,"Готово","Отмена");
+}
+
+showEmailDialog(playerid){
+	ShowPlayerDialog(playerid,DIALOG_STYLE_INPUT,dRegistrationEmail,"Регистрация",""WHITE"Введи действующий EMail адрес.\nЕсли ты потеряешь доступ к аккаунту, то ты сможешь восстановить его.\n"RED"• На указанный EMail придёт код подтверждения без которого нельзя продолжить регистрацию!\n"YELLOW"• Убедитесь в том, что текущий никнейм тебя устраивает, т.к. повторная регистрация с таким EMail невозможна!\n\n"WHITE"Введи Email в поле ниже и нажми \"Далее\"","Далее","Выход");
 }
