@@ -8,10 +8,9 @@
 	#error Please define MAILER_URL before including the mailer include.
 #endif
 
-stock SendMail( const szReceiver[ ], const szSenderMail[ ], const szSenderName[ ], const szSubject[ ], const szMessage[ ] )
-{
+stock SendMail( const szReceiver[ ], const szSenderMail[ ], const szSenderName[ ], const szSubject[ ], const szMessage[ ] ){
 	static szBuffer[ MAILER_MAX_MAIL_SIZE ];
-	sz="t=";
+	szBuffer="t=";
 	new iPos    = strlen( szBuffer ), iLength = strlen( szReceiver );
 
 	memcpy( szBuffer, szReceiver, iPos * 4, ( iLength + 1 ) * 4 );
