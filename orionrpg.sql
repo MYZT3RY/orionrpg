@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Хост: localhost
--- Время создания: Апр 24 2019 г., 09:47
+-- Время создания: Апр 24 2019 г., 09:49
 -- Версия сервера: 8.0.12
 -- Версия PHP: 7.2.11
 
@@ -36,7 +36,8 @@ CREATE TABLE `users` (
   `referal` varchar(24) NOT NULL DEFAULT '-',
   `gender` tinyint(1) NOT NULL DEFAULT '0',
   `character` smallint(3) NOT NULL DEFAULT '23',
-  `money` int(11) NOT NULL DEFAULT '20000'
+  `money` int(11) NOT NULL DEFAULT '20000',
+  `bankmoney` int(11) NOT NULL DEFAULT '75000'
 ) ENGINE=InnoDB DEFAULT CHARSET=cp1251;
 
 --
