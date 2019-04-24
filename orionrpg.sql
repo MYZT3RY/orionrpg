@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Хост: localhost
--- Время создания: Апр 11 2019 г., 06:50
+-- Время создания: Апр 24 2019 г., 09:25
 -- Версия сервера: 8.0.12
 -- Версия PHP: 7.2.11
 
@@ -32,7 +32,9 @@ CREATE TABLE `users` (
   `id` int(11) NOT NULL,
   `name` varchar(24) NOT NULL,
   `password` varchar(30) CHARACTER SET cp1251 COLLATE cp1251_general_ci NOT NULL,
-  `email` varchar(32) NOT NULL
+  `email` varchar(32) CHARACTER SET cp1251 COLLATE cp1251_general_ci NOT NULL DEFAULT '-',
+  `referal` varchar(24) NOT NULL DEFAULT '-',
+  `gender` tinyint(1) NOT NULL DEFAULT '0'
 ) ENGINE=InnoDB DEFAULT CHARSET=cp1251;
 
 --
