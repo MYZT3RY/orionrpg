@@ -30,27 +30,37 @@ new mysql_connection;
 #define GREY "{afafaf}"
 #define RED "{fb6146}"
 #define YELLOW "{ffff00}"
+#define CURIOUS_BLUE "{3399cc}"
+#define YELLOW_GREEN "{9acd32}"
 
 #define C_GREY 0xAFAFAFAA
+#define C_YELLOW_GREEN 0x9ACD32AA
 
 //
 
-#define SiteLink "www.orio-n.com"
-//#define SiteMail "admin@d1maz.ru"
-#define SiteMail "support@orio-n.com"
+#define SITE_LINK "www.orio-n.com"
+//#define SITE_MAIL "admin@d1maz.ru"
+#define SITE_MAIL "support@orio-n.com"
+#define IP_SERVER "127.0.0.1:7777"
 
 //
 
 #define KickPlayer(%0) SetTimerEx("@__kick_player",250,false,"i",%0)
 
 main(){
-	print("Orio[N] RPG ("SiteLink") | copy by d1maz. (d1maz.ru)");
+	print("Orio[N] RPG ("SITE_LINK") | copy by d1maz. (d1maz.ru)");
 }
 
 enum sr{ 
 	id,
 	name[MAX_PLAYER_NAME],
-	email[32]
+	email[32],
+	gender,
+	referal[MAX_PLAYER_NAME],
+	character,
+	money,
+	bankmoney,
+	dateofregister[10]
 }
 
 new user[MAX_PLAYERS][sr];
@@ -60,6 +70,8 @@ enum dlgs{
 	dRegistration,
 	dRegistrationEmail,
 	dRegistrationVerificationEmail,
+	dRegistrationReferal,
+	dRegistrationGender,
 	dAuthorization
 }
 
@@ -75,9 +87,9 @@ public OnGameModeInit(){
 		}
 	}
 	SendRconCommand("hostname Orio[N] RPG 2 (0.3.7) Rus/Ua");
-	SendRconCommand("weburl "SiteLink"");
+	SendRconCommand("weburl "SITE_LINK"");
 	SendRconCommand("language Russian");
-	SetGameModeText("Orio[N] RP/RPG v0.005r1");
+	SetGameModeText("Orio[N] RP/RPG v0.010r1");
 	return true; 
 }
 
@@ -88,7 +100,7 @@ public OnPlayerConnect(playerid){
 	new Cache:cache_users=mysql_query(mysql_connection,query);
 	if(cache_get_row_count(mysql_connection)){
 		new string[310-2+MAX_PLAYER_NAME-2+11];
-		format(string,sizeof(string),"\n\n\n\n"WHITE"Привет "BLUE"%s"WHITE"\n\nМы рады снова видеть тебя на Orio["BLUE"N"WHITE"] RPG!\nНаш адрес в интернете - "BLUE""SiteLink""WHITE"\nТвой уникальный номер аккаунта: "BLUE"%i\n"WHITE"Дата регистрации: "BLUE"11.11.1111\n\n\n\n"WHITE"Для авторизации на сервере введите пароль к аккаунту:",user[playerid][name],user[playerid][id]);
+		format(string,sizeof(string),"\n\n\n\n"WHITE"Привет "BLUE"%s"WHITE"\n\nМы рады снова видеть тебя на Orio["BLUE"N"WHITE"] RPG!\nНаш адрес в интернете - "BLUE""SITE_LINK""WHITE"\nТвой уникальный номер аккаунта: "BLUE"%i\n"WHITE"Дата регистрации: "BLUE"11.11.1111\n\n\n\n"WHITE"Для авторизации на сервере введите пароль к аккаунту:",user[playerid][name],user[playerid][id]);
 		ShowPlayerDialog(playerid,dAuthorization,DIALOG_STYLE_PASSWORD,"Авторизация",string,"Войти","Отмена");
 	}
 	else{
@@ -100,7 +112,7 @@ public OnPlayerConnect(playerid){
 
 public OnPlayerDisconnect(playerid,reason){
 	for(new sr:i; i < sr; i++){
-		user[playerid][i] = EOS;
+		user[playerid][i]=EOS;
 	}
 	return true;
 }
@@ -124,6 +136,7 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]){
 					SendClientMessage(playerid,C_GREY,""RED"x"GREY" Длина пароля может быть от 6 до 30 символов.");
 					return true;
 				}
+				SetPVarString(playerid,"RegPassword",temp_password);
 				showEmailDialog(playerid);
 			}
 			else{
@@ -158,7 +171,7 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]){
 				format(string,sizeof(string),""WHITE"На твой EMail "GREEN"%s"WHITE" отправлен 4-х значный код подтверждения!\nВведите его в поле ниже и нажми \"Далее\""RED"\n• Если письмо не пришло проверь папку \"Спам\"",temp_email);
 				ShowPlayerDialog(playerid,dRegistrationVerificationEmail,DIALOG_STYLE_INPUT,"Подтверждение EMail",string,"Далее","");
 				format(string,sizeof(string),"Привет! Для продолжения регистрации аккаунта %s введи этот код %i в окно подтверждения EMail в игре.",user[playerid][name],temp_code);
-				SendMail(temp_email,SiteMail,"ORION RPG","REGISTRATION",string);
+				SendMail(temp_email,SITE_MAIL,"ORION RPG","REGISTRATION",string);
 			}
 			else{
 				Kick(playerid);
@@ -172,11 +185,7 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]){
 					return true;
 				}
 				if(temp_code == GetPVarInt(playerid,"RegCode")){
-					new temp_email[32];
-					GetPVarString(playerid,"RegEmail",temp_email,sizeof(temp_email));
-					user[playerid][email]=EOS;
-					strmid(user[playerid][email],temp_email,0,strlen(temp_email));
-					
+					showReferalDialog(playerid);
 				}
 				else{
 					SendClientMessage(playerid,C_GREY,""RED"x"GREY" Введён неверный код подтверждения!");
@@ -187,7 +196,88 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]){
 				Kick(playerid);
 			}
 		}
+		case dRegistrationReferal:{
+			if(response){
+				new temp_name[128];
+				if(sscanf(inputtext,"s[128]",temp_name)){
+					showReferalDialog(playerid);
+					return true;
+				}
+				if(!strcmp(temp_name,user[playerid][name])){
+					showReferalDialog(playerid);
+					SendClientMessage(playerid,C_GREY,""RED"x"GREY" Нельзя указывать себя в качестве пригласившего!");
+					return true;
+				}
+				new query[45-2+MAX_PLAYER_NAME];
+				mysql_format(mysql_connection,query,sizeof(query),"select`id`from`users`where`name`='%e'limit 1",temp_name);
+				new Cache:cache_users=mysql_query(mysql_connection,query,true);
+				if(cache_get_row_count(mysql_connection)){
+					SetPVarString(playerid,"RegReferal",temp_name);
+					ShowPlayerDialog(playerid,dRegistrationGender,DIALOG_STYLE_MSGBOX,"Выбор пола",""WHITE"Ты Парень или Девушка?","Парень","Девушка");
+				}
+				else{
+					showReferalDialog(playerid);
+					SendClientMessage(playerid,C_GREY,""RED"x"GREY" Аккаунта с таким ником не существует!");
+				}
+				cache_delete(cache_users,mysql_connection);
+			}
+			else{
+				ShowPlayerDialog(playerid,dRegistrationGender,DIALOG_STYLE_MSGBOX,"Выбор пола",""WHITE"Ты Парень или Девушка?","Парень","Девушка");
+			}
+		}
+		case dRegistrationGender:{
+			user[playerid][gender]=(response)?1:2;
+			new temp_email[32],temp_password[32],temp_referal[MAX_PLAYER_NAME],temp_dateofregister[10];
+			GetPVarString(playerid,"RegEmail",temp_email,sizeof(temp_email));
+			strmid(user[playerid][email],temp_email,0,strlen(temp_email));
+			GetPVarString(playerid,"RegPassword",temp_password,sizeof(temp_password));
+			GetPVarString(playerid,"RegReferal",temp_referal,sizeof(temp_referal));
+			if(!strlen(temp_referal)){
+				strmid(user[playerid][referal],"-",0,1);
+			}
+			else{
+				strmid(user[playerid][referal],temp_referal,0,1);
+			}
+			user[playerid][character]=(user[playerid][gender]==1)?23:192;
+			user[playerid][money]=20000;
+			user[playerid][bankmoney]=75000;
+			new temp_day,temp_month,temp_year;
+			getdate(temp_year,temp_month,temp_day);
+			format(temp_dateofregister,sizeof(temp_dateofregister),"%i.%i.%i",temp_day,temp_month,temp_year);
+			strmid(user[playerid][dateofregister],temp_dateofregister,0,strlen(temp_dateofregister));
+			new query[136-(2*7)+MAX_PLAYER_NAME+32+32+MAX_PLAYER_NAME+1+3+10];
+			mysql_format(mysql_connection,query,sizeof(query),"insert into`users`(`name`,`password`,`email`,`referal`,`gender`,`character`,`dateofregister`)values('%e','%e','%e','%e','%i','%i','%e')",user[playerid][name],temp_password,temp_email,temp_referal,user[playerid][gender],user[playerid][character],temp_dateofregister);
+			new Cache:cache_users=mysql_query(mysql_connection,query,true);
+			user[playerid][id]=cache_insert_id(mysql_connection);
+			cache_delete(cache_users,mysql_connection);
+			for(new i=0; ++i<20;){
+				SendClientMessage(playerid,-1,"");
+			}
+			new string[83-2+32];
+			format(string,sizeof(string),"IP адрес сервера: "GREEN""IP_SERVER""WHITE" | Твой пароль к аккаунту: "GREEN"%s",temp_password);
+			SendClientMessage(playerid,-1,string);
+			SendClientMessage(playerid,-1,"Не потеряй эти данные! Сделай снимок экрана клавишей < "CURIOUS_BLUE"F8"WHITE" >");
+			SendClientMessage(playerid,-1,"Все снимки можно найти в ( "GREY"Мои документы > GTA San Andreas User Files > SAMP > Screens"WHITE" )");
+			SendClientMessage(playerid,-1,"");
+			SendClientMessage(playerid,-1,""GREEN"/kpk"WHITE" - поможет полноценно начать игру и узнать много нового.");
+			SendClientMessage(playerid,-1,"Поздравляем с успешной регистрацией, Приятной игры!");
+			SendClientMessage(playerid,-1,"");
+			SendClientMessage(playerid,C_YELLOW_GREEN,"BONUS: На банковский счёт зачислено +75000$ по программе \"Бонусы для новичков\".");
+			SetPVarInt(playerid,"PlayerLogged",1);
+			SpawnPlayer(playerid);
+		}
 	}
+	return true;
+}
+
+public OnPlayerSpawn(playerid){
+	if(!GetPVarInt(playerid,"PlayerLogged")){
+		Kick(playerid);
+	}
+	SetPlayerPos(playerid,-1966.1068,121.8472,27.6875);
+	SetPlayerFacingAngle(playerid,90.0);
+	SetPlayerSkin(playerid,user[playerid][character]);
+	GivePlayerMoney(playerid,user[playerid][money]);
 	return true;
 }
 
@@ -199,6 +289,10 @@ showRegistrationDialog(playerid){
 
 showEmailDialog(playerid){
 	ShowPlayerDialog(playerid,dRegistrationEmail,DIALOG_STYLE_INPUT,"Регистрация",""WHITE"Введи действующий EMail адрес.\nЕсли ты потеряешь доступ к аккаунту, то ты сможешь восстановить его.\n"RED"• На указанный EMail придёт код подтверждения без которого нельзя продолжить регистрацию!\n"YELLOW"• Убедитесь в том, что текущий никнейм тебя устраивает, т.к. повторная регистрация с таким EMail невозможна!\n\n"WHITE"Введи Email в поле ниже и нажми \"Далее\"","Далее","Выход");
+}
+
+showReferalDialog(playerid){
+	ShowPlayerDialog(playerid,dRegistrationReferal,DIALOG_STYLE_INPUT,"Регистрация",""WHITE"Если тебя кто-то пригласил на сервер, то введи его ник в поле ниже.\n"GREEN"• Когда ты достигнешь 5 уровня, пригласивший тебя игрок получит бонус.","Далее","Пропустить");
 }
 
 @__kick_player(playerid);
