@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Хост: localhost
--- Время создания: Апр 24 2019 г., 09:49
+-- Время создания: Апр 25 2019 г., 06:13
 -- Версия сервера: 8.0.12
 -- Версия PHP: 7.2.11
 
@@ -37,7 +37,8 @@ CREATE TABLE `users` (
   `gender` tinyint(1) NOT NULL DEFAULT '0',
   `character` smallint(3) NOT NULL DEFAULT '23',
   `money` int(11) NOT NULL DEFAULT '20000',
-  `bankmoney` int(11) NOT NULL DEFAULT '75000'
+  `bankmoney` int(11) NOT NULL DEFAULT '75000',
+  `dateofregister` varchar(10) NOT NULL DEFAULT '01.01.1970'
 ) ENGINE=InnoDB DEFAULT CHARSET=cp1251;
 
 --
