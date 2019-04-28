@@ -35,6 +35,7 @@ new mysql_connection;
 
 #define C_GREY 0xAFAFAFAA
 #define C_YELLOW_GREEN 0x9ACD32AA
+#define C_RED 0xFB6146AA
 
 //
 
@@ -72,7 +73,8 @@ enum dlgs{
 	dRegistrationVerificationEmail,
 	dRegistrationReferal,
 	dRegistrationGender,
-	dAuthorization
+	dAuthorization,
+	dAuthorizationRestore
 }
 
 public OnGameModeInit(){
@@ -86,6 +88,7 @@ public OnGameModeInit(){
 			return true;
 		}
 	}
+	mysql_log(LOG_ALL);
 	SendRconCommand("hostname Orio[N] RPG 2 (0.3.7) Rus/Ua");
 	SendRconCommand("weburl "SITE_LINK"");
 	SendRconCommand("language Russian");
@@ -95,13 +98,17 @@ public OnGameModeInit(){
 
 public OnPlayerConnect(playerid){
 	GetPlayerName(playerid,user[playerid][name],MAX_PLAYER_NAME);
-	new query[37-2+MAX_PLAYER_NAME];
-	mysql_format(mysql_connection,query,sizeof(query),"select`id`from`users`where`name`='%e'",user[playerid][name]);
+	return true;
+}
+
+public OnPlayerRequestClass(playerid,classid){
+	new query[55-2+MAX_PLAYER_NAME];
+	mysql_format(mysql_connection,query,sizeof(query),"select`id`,`dateofregister`from`users`where`name`='%e'",user[playerid][name]);	
 	new Cache:cache_users=mysql_query(mysql_connection,query);
 	if(cache_get_row_count(mysql_connection)){
-		new string[310-2+MAX_PLAYER_NAME-2+11];
-		format(string,sizeof(string),"\n\n\n\n"WHITE"Привет "BLUE"%s"WHITE"\n\nМы рады снова видеть тебя на Orio["BLUE"N"WHITE"] RPG!\nНаш адрес в интернете - "BLUE""SITE_LINK""WHITE"\nТвой уникальный номер аккаунта: "BLUE"%i\n"WHITE"Дата регистрации: "BLUE"11.11.1111\n\n\n\n"WHITE"Для авторизации на сервере введите пароль к аккаунту:",user[playerid][name],user[playerid][id]);
-		ShowPlayerDialog(playerid,dAuthorization,DIALOG_STYLE_PASSWORD,"Авторизация",string,"Войти","Отмена");
+		user[playerid][id]=cache_get_field_content_int(0,"id",mysql_connection);
+		cache_get_field_content(0,"dateofregister",user[playerid][dateofregister],mysql_connection,10);
+		showAuthorizationDialog(playerid);
 	}
 	else{
 		showRegistrationDialog(playerid);
@@ -266,6 +273,39 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]){
 			SetPVarInt(playerid,"PlayerLogged",1);
 			SpawnPlayer(playerid);
 		}
+		case dAuthorization:{
+			if(response){
+				new temp_password[128];
+				if(sscanf(inputtext,"s[128]",temp_password)){
+					showAuthorizationDialog(playerid);
+					return true;
+				}
+				new query[53-2-2+MAX_PLAYER_NAME+32];
+				mysql_format(mysql_connection,query,sizeof(query),"select*from`users`where`name`='%e'and`password`='%e'",user[playerid][name],temp_password);				
+				new Cache:cache_users=mysql_query(mysql_connection,query,true);
+				if(cache_get_row_count(mysql_connection)){
+					loadUser(playerid,cache_users);
+					SetPVarInt(playerid,"PlayerLogged",1);
+					SpawnPlayer(playerid);
+				}
+				else{
+					SetPVarInt(playerid,"loginAttemps",GetPVarInt(playerid,"loginAttemps")+1);
+					if(GetPVarInt(playerid,"loginAttemps")==3){
+						showRestoreUserDialog(playerid);
+					}
+					else{
+						showAuthorizationDialog(playerid);
+						new string[64-2+1];
+						format(string,sizeof(string),"Введен неверный пароль! У тебя осталось %i попыток ввода пароля",3-GetPVarInt(playerid,"loginAttemps"));
+						SendClientMessage(playerid,C_RED,string);
+					}
+				}
+				cache_delete(cache_users,mysql_connection);
+			}
+			else{
+				Kick(playerid);
+			}
+		}
 	}
 	return true;
 }
@@ -293,6 +333,26 @@ showEmailDialog(playerid){
 
 showReferalDialog(playerid){
 	ShowPlayerDialog(playerid,dRegistrationReferal,DIALOG_STYLE_INPUT,"Регистрация",""WHITE"Если тебя кто-то пригласил на сервер, то введи его ник в поле ниже.\n"GREEN"• Когда ты достигнешь 5 уровня, пригласивший тебя игрок получит бонус.","Далее","Пропустить");
+}
+
+showAuthorizationDialog(playerid){
+	new string[310-2+MAX_PLAYER_NAME-2+11];
+	format(string,sizeof(string),"\n\n\n\n"WHITE"Привет "BLUE"%s"WHITE"\n\nМы рады снова видеть тебя на Orio["BLUE"N"WHITE"] RPG!\nНаш адрес в интернете - "BLUE""SITE_LINK""WHITE"\nТвой уникальный номер аккаунта: "BLUE"%i\n"WHITE"Дата регистрации: "BLUE"%s\n\n\n\n"WHITE"Для авторизации на сервере введите пароль к аккаунту:",user[playerid][name],user[playerid][id],user[playerid][dateofregister]);
+	ShowPlayerDialog(playerid,dAuthorization,DIALOG_STYLE_PASSWORD,"Авторизация",string,"Войти","Отмена");
+}
+
+showRestoreUserDialog(playerid){
+	ShowPlayerDialog(playerid,dAuthorizationRestore,DIALOG_STYLE_INPUT,"Восстановление аккаунта",""WHITE"Введи привязанный к аккаунту Email адрес, для восстановления пароля!\nЕсли ты не хочешь восстанавливать пароль, просто нажми \"Выход\"","Далее","Выход");
+}
+
+loadUser(playerid,Cache:cache_users){
+	cache_set_active(cache_users,mysql_connection);
+	cache_get_field_content(0,"email",user[playerid][email],mysql_connection,32);
+	cache_get_field_content(0,"referal",user[playerid][referal],mysql_connection,MAX_PLAYER_NAME);
+	user[playerid][gender]=cache_get_field_content_int(0,"gender",mysql_connection);
+	user[playerid][character]=cache_get_field_content_int(0,"character",mysql_connection);
+	user[playerid][money]=cache_get_field_content_int(0,"money",mysql_connection);
+	user[playerid][bankmoney]=cache_get_field_content_int(0,"bankmoney",mysql_connection);
 }
 
 @__kick_player(playerid);
