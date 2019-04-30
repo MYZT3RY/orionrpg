@@ -332,8 +332,9 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]){
 					showRestoreUserCodeDialog(playerid);
 				}
 				else{
-					Kick(playerid);
+					KickPlayer(playerid);
 				}
+				cache_delete(cache_users,mysql_connection);
 			}
 			else{
 				Kick(playerid);
@@ -380,6 +381,7 @@ public OnPlayerSpawn(playerid){
 	SetPlayerFacingAngle(playerid,90.0);
 	SetPlayerSkin(playerid,user[playerid][character]);
 	GivePlayerMoney(playerid,user[playerid][money]);
+	SetCameraBehindPlayer(playerid);
 	return true;
 }
 
