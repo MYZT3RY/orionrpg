@@ -74,7 +74,8 @@ enum dlgs{
 	dRegistrationReferal,
 	dRegistrationGender,
 	dAuthorization,
-	dAuthorizationRestore
+	dAuthorizationRestore,
+	dAuthorizationRestoreCode
 }
 
 public OnGameModeInit(){
@@ -306,6 +307,67 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]){
 				Kick(playerid);
 			}
 		}
+		case dAuthorizationRestore:{
+			if(response){
+				new temp_email[128];
+				if(sscanf(inputtext,"s[128]",temp_email)){
+					showRestoreUserDialog(playerid);
+					return true;
+				}
+				if(!regex_match(temp_email,"[a-zA-Z0-9_\\.-]{1,22}+@([a-zA-Z0-9\\-]{2,8}+\\.)+[a-zA-Z]{2,4}")){
+					showRestoreUserDialog(playerid);
+					SendClientMessage(playerid,C_GREY,""RED"x"GREY" Некорректный EMail!");
+				    return true;
+				}
+				new query[66-2-2+30+32];
+				mysql_format(mysql_connection,query,sizeof(query),"select`password`from`users`where`name`='%e'and`email`='%e'limit 1",user[playerid][name],temp_email);				
+				new Cache:cache_users=mysql_query(mysql_connection,query,true);
+				if(cache_get_row_count(mysql_connection)){
+					new temp_code=10000000+random(89999999);
+					SetPVarInt(playerid,"RestoreCode",temp_code);
+					SetPVarString(playerid,"RestoreEmail",temp_email);
+					new string[159-2-2+MAX_PLAYER_NAME+8];
+					format(string,sizeof(string),"Привет! Для восстановления доступа к аккаунту %s введи этот код %i в игре. Если ты не делал(а) запрос на восстановление, то просто проигнорируй это сообщение!",user[playerid][name],temp_code);					
+					SendMail(temp_email,SITE_MAIL,"ORION RPG","PASSWORD",string);
+					showRestoreUserCodeDialog(playerid);
+				}
+				else{
+					Kick(playerid);
+				}
+			}
+			else{
+				Kick(playerid);
+			}
+		}
+		case dAuthorizationRestoreCode:{
+			if(response){
+				new temp_code;
+				if(sscanf(inputtext,"i",temp_code)){
+					showRestoreUserCodeDialog(playerid);
+					return true;
+				}
+				if(temp_code==GetPVarInt(playerid,"RestoreCode")){
+					new temp_email[32];
+					GetPVarString(playerid,"RestoreEmail",temp_email,sizeof(temp_email));
+					new query[66-2-2+MAX_PLAYER_NAME+32];
+					mysql_format(mysql_connection,query,sizeof(query),"select`password`from`users`where`name`='%e'and`email`='%e'limit 1",user[playerid][name],temp_email);					
+					new Cache:cache_users=mysql_query(mysql_connection,query,true);
+					new temp_password[32];
+					cache_get_field_content(0,"password",temp_password,mysql_connection,sizeof(temp_password));
+					cache_delete(cache_users,mysql_connection);
+					new string[39-2+32];
+					format(string,sizeof(string),""WHITE"Пароль от аккаунта: "GREEN"%s",temp_password);					
+					ShowPlayerDialog(playerid,0,DIALOG_STYLE_MSGBOX,"Пароль",string,"Выход","");
+					KickPlayer(playerid);
+				}
+				else{
+					Kick(playerid);
+				}
+			}
+			else{
+				Kick(playerid);
+			}
+		}
 	}
 	return true;
 }
@@ -343,6 +405,10 @@ showAuthorizationDialog(playerid){
 
 showRestoreUserDialog(playerid){
 	ShowPlayerDialog(playerid,dAuthorizationRestore,DIALOG_STYLE_INPUT,"Восстановление аккаунта",""WHITE"Введи привязанный к аккаунту Email адрес, для восстановления пароля!\nЕсли ты не хочешь восстанавливать пароль, просто нажми \"Выход\"","Далее","Выход");
+}
+
+showRestoreUserCodeDialog(playerid){
+	ShowPlayerDialog(playerid,dAuthorizationRestoreCode,DIALOG_STYLE_INPUT,"Подтверждение EMail",""WHITE"На твой EMail отправлен 8-ми значный код подтверждения!\nВведи его в поле ниже и нажми \"Далее\"\n"RED"• Если письмо не пришло, проверь папку \"Спам\"\n• У тебя одна попытка ввода кода подтверждения!","Далее","");
 }
 
 loadUser(playerid,Cache:cache_users){
