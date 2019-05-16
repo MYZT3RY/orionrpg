@@ -11,6 +11,7 @@
 #include <streamer>
 #include <additions/pickups>
 #include <additions/3dtexts>
+#include <additions/colors>
 
 // подключение к базе данных.
 
@@ -24,21 +25,6 @@ new mysql_connection;
 
 #undef MAX_PLAYERS
 #define MAX_PLAYERS 300
-
-// цвета.
-
-#define WHITE "{ffffff}"
-#define GREEN "{249900}"
-#define BLUE "{3399cc}"
-#define GREY "{afafaf}"
-#define RED "{fb6146}"
-#define YELLOW "{ffff00}"
-#define CURIOUS_BLUE "{3399cc}"
-#define YELLOW_GREEN "{9acd32}"
-
-#define C_GREY 0xAFAFAFAA
-#define C_YELLOW_GREEN 0x9ACD32AA
-#define C_RED 0xFB6146AA
 
 //
 
@@ -97,7 +83,8 @@ public OnGameModeInit(){
 	SendRconCommand("hostname Orio[N] RPG 2 (0.3.7) Rus/Ua");
 	SendRconCommand("weburl "SITE_LINK"");
 	SendRconCommand("language Russian");
-	SetGameModeText("Orio[N] RP/RPG v0.010r1");
+	SetGameModeText("Orio[N] RP/RPG v0.012r1");
+	CreateDynamic3DTextLabel("Наш адрес в интернете "SITE_LINK"",-1,-1994.7456,137.8349,30.4119,100.0);
 	return true; 
 }
 
