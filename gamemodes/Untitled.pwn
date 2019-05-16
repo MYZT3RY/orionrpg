@@ -8,6 +8,9 @@
 #define MAILER_URL "orio-n.com/mailer.php"
 //#define MAILER_URL "d1maz.ru/mailer.php"
 #include <mailer>
+#include <streamer>
+#include <additions/pickups>
+#include <additions/3dtexts>
 
 // подключение к базе данных.
 
@@ -46,7 +49,7 @@ new mysql_connection;
 
 //
 
-#define KickPlayer(%0) SetTimerEx("@__kick_player",250,false,"i",%0)
+#define KickPlayer(%0) SetTimerEx("kick_player",250,false,"i",%0)
 
 main(){
 	print("Orio[N] RPG ("SITE_LINK") | copy by d1maz. (d1maz.ru)");
@@ -89,7 +92,8 @@ public OnGameModeInit(){
 			return true;
 		}
 	}
-	mysql_log(LOG_ALL);
+	Create3DTexts();
+	CreatePickups();
 	SendRconCommand("hostname Orio[N] RPG 2 (0.3.7) Rus/Ua");
 	SendRconCommand("weburl "SITE_LINK"");
 	SendRconCommand("language Russian");
@@ -423,7 +427,7 @@ loadUser(playerid,Cache:cache_users){
 	user[playerid][bankmoney]=cache_get_field_content_int(0,"bankmoney",mysql_connection);
 }
 
-@__kick_player(playerid);
-@__kick_player(playerid){
+forward kick_player(playerid);
+public kick_player(playerid){
 	Kick(playerid);
 }
