@@ -53,7 +53,9 @@ enum dlgs{
 	dRegistrationGender,
 	dAuthorization,
 	dAuthorizationRestore,
-	dAuthorizationRestoreCode
+	dAuthorizationRestoreCode,
+	dHelp,
+	dHelpAddition
 }
 
 public OnGameModeInit(){
@@ -72,8 +74,7 @@ public OnGameModeInit(){
 	SendRconCommand("hostname Orio[N] RPG 2 (0.3.7) Rus/Ua");
 	SendRconCommand("weburl "SITE_LINK"");
 	SendRconCommand("language Russian");
-	SetGameModeText("Orio[N] RP/RPG v0.012r1");
-	CreateDynamic3DTextLabel("Наш адрес в интернете "SITE_LINK"",-1,-1994.7456,137.8349,30.4119,100.0);
+	SetGameModeText("Orio[N] RP/RPG v0.017r1");
 	return true; 
 }
 
@@ -349,6 +350,68 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]){
 				Kick(playerid);
 			}
 		}
+		case dHelp:{
+			if(response){
+				static string[1169];
+				switch(listitem){
+					case 0:{
+						strcat(string,"\n\n\n\nДля ввода команд используй клавишу "WHITE"F6"LIGHT_STEEL_BLUE" или "WHITE"T"LIGHT_STEEL_BLUE"(на латинице)\n");
+						strcat(string,"Пример: Попробуй достать свой карманный компьютер. Нажми "WHITE"F6"LIGHT_STEEL_BLUE" и введи в окошко "WHITE"/kpk.\n");
+						strcat(string,"\n"LIGHT_STEEL_BLUE"Так же, ты можешь разговаривать с другими игроками пользуясь чатом.\n");
+						strcat(string,"Есть несколько видов чата: "WHITE"/o"LIGHT_STEEL_BLUE" - общий чат, "WHITE"/c"LIGHT_STEEL_BLUE" - ближний чат, "WHITE"/s"LIGHT_STEEL_BLUE" - чат с высоким радиусом(Крик).\n");
+						strcat(string,"Пример: Нажми "WHITE"F6"LIGHT_STEEL_BLUE" и введи в окошко "WHITE"/s привет"LIGHT_STEEL_BLUE".\n");
+						strcat(string,"Этот чат позволит привлечь больше внимания и тебя услышат на большом расстоянии.\n\n\n");
+					}
+					case 1:{
+						strcat(string,"\n\n\n\nУровень игрока"WHITE"(LvL в правом верхнем углу экрана)"LIGHT_STEEL_BLUE" является главным ключём к новым возможностям.\n");
+						strcat(string,"Например: с 1-го уровня можно общаться с игроками в общем чате и получить лицензию на мототранспорт, со 2-го попасть в Организацию или Банду, с 3-го получить лицензию на ношение оружия, и т.д.\n");
+						strcat(string,"В правом верхнем углу экрана отображается "WHITE"LvL"LIGHT_STEEL_BLUE" и "WHITE"Exp"LIGHT_STEEL_BLUE" персонажа. "WHITE"1 Exp = 1 час игры на сервере"LIGHT_STEEL_BLUE", т.е."WHITE" для получения 1-го уровня тебе необходимо получить 4 Exp"LIGHT_STEEL_BLUE".\n");
+						strcat(string,"Чем выше уровень, тем больше Exp необходимо получить.\n");
+						strcat(string,"На сервере присутствует "WHITE"система VIP-аккаунтов"LIGHT_STEEL_BLUE". Всего 3 вида VIP. Игрок достигший 15 уровня автоматически становится VIP игроком сервера и получает дополнительные возможности.\n\n\n");
+					}
+					case 2:{
+						strcat(string,"\n\n\n\nНа сервере ведут активную деятельность различные фракции.\n");
+						strcat(string,"Банды занимаются разбойными нападениями, торгуют оружием и наркотиками.\n");
+						strcat(string,"Стражи порядка(Законники) стараются перекрыть кислород мафиям и бандам.\n");
+						strcat(string,"Наёмники разглядывают свою жертву в снайперском прицеле.\n");
+						strcat(string,"Медики спешат на вызов после очередной перестрелки.\n\n");
+						strcat(string,"На сервере "WHITE"8 организаций"LIGHT_STEEL_BLUE", "WHITE"4 мафии"LIGHT_STEEL_BLUE" и "WHITE"9 банд"LIGHT_STEEL_BLUE".\n");
+						strcat(string,"В каждой фракции есть глава"WHITE"(Лидер)"LIGHT_STEEL_BLUE". Только лидер может принять новобранца во фракцию"WHITE" (Для вступления необходим 2 уровень)"LIGHT_STEEL_BLUE".\n");
+						strcat(string,"У каждой фракции есть свой личный раздел на форуме "WHITE""SITE_LINK""LIGHT_STEEL_BLUE". В разделе лидер публикует необходимую информацию для своей фракции.\n\n");
+						strcat(string,"Список фракций:\n\n");
+						strcat(string,""WHITE"Организации: "LIGHT_STEEL_BLUE"Полиция Los Santos, Полиция Las Venturas, FBI, Армия, Такси, Агенство новостей, Наёмники, МЧС.\n");
+						strcat(string,""WHITE"Банды: "LIGHT_STEEL_BLUE"East Side Ballas, Grove Street, El Coronos, LS Vagos, LS Convers, SF Rifa, Байкеры, Street Racers LS, Street Racers LV\n");
+						strcat(string,""WHITE"Мафии: "LIGHT_STEEL_BLUE"Yakuza, Triads, Русская мафия, La Cosa Nostra\n\n\n");
+					}
+					case 3:{
+						strcat(string,"\n\n\n\nНа сервере имеется различная недвижимость.\n");
+						strcat(string,""WHITE"Дома"LIGHT_STEEL_BLUE","WHITE" Магазины незаконной продукции(МНП)"LIGHT_STEEL_BLUE", "WHITE"Автомобильные Заправочные Станции(АЗС)"LIGHT_STEEL_BLUE".\n");
+						strcat(string,"Купить недвижимость может любой игрок достигший 5 или выше уровня и имеющий финансовый бюджет для этого.\n");
+						strcat(string,"Быть владельцем ресторана, оружейного магазина или автосалона...\n");
+						strcat(string,"Жить в особняке в самом престижном районе "WHITE"VineWood"LIGHT_STEEL_BLUE" - это осуществимые желания.\n\n\n");
+					}
+					case 4:{
+						strcat(string,"\n\n\n\nОгромное кол-во мест трудоустройства помогут зарабатывать начальный капитал.\n");
+						strcat(string,"Грузчик, Дальнобойщик, Продавец лотерейных билетов, Уборщик мусора.. это лишь небольшой список работ доступных на сервере.\n");
+						strcat(string,"Но для любой работы необходимо сначала получить "WHITE"водительские права"LIGHT_STEEL_BLUE".\n");
+						strcat(string,"Найти автошколу или желаемое место работы поможет "WHITE"GPS-навигатор"LIGHT_STEEL_BLUE" в твоём "WHITE"/kpk"LIGHT_STEEL_BLUE".\n\n\n");
+					}
+					case 5:{
+						strcat(string,"\n\n\n\nНа сервере огромный функционал и большое кол-во возможностей.\n");
+						strcat(string,"На нашем форуме "WHITE""SITE_LINK""LIGHT_STEEL_BLUE" в разделе "WHITE"F.A.Q."LIGHT_STEEL_BLUE" ты можешь найти много полезной информации для себя и узнать много нового.\n");
+						strcat(string,"Если тебе что-то не понятно по игровому процессу, то ты всегда можешь обратиться к "WHITE"помошникам(Хелперам)"LIGHT_STEEL_BLUE" сервера.\n");
+						strcat(string,"Задай им свой вопрос. Нажми клавишу "WHITE"F6"LIGHT_STEEL_BLUE" и в окошко введи команду "WHITE"/ask [текст вопроса]"LIGHT_STEEL_BLUE".\n\n\n");
+					}
+				}
+				ShowPlayerDialog(playerid,dHelpAddition,DIALOG_STYLE_MSGBOX,"Помощь",string,"Назад","Назад");
+				string="";
+			}
+		}
+		case dHelpAddition:{
+			if(response || !response){
+				ShowPlayerDialog(playerid,dHelp,DIALOG_STYLE_LIST,"Помощь","Команды и чат.\nУровень.\nФракции.\nНедвижимость.\nРаботы.\nБолее подробная информация.","Читать","Выйти");
+			}
+		}
 	}
 	return true;
 }
@@ -362,6 +425,13 @@ public OnPlayerSpawn(playerid){
 	SetPlayerSkin(playerid,user[playerid][character]);
 	GivePlayerMoney(playerid,user[playerid][money]);
 	SetCameraBehindPlayer(playerid);
+	return true;
+}
+
+public OnPlayerPickUpDynamicPickup(playerid, STREAMER_TAG_PICKUP:pickupid){
+	if(pickupid == pickup_help){
+		ShowPlayerDialog(playerid,dHelp,DIALOG_STYLE_LIST,"Помощь","Команды и чат.\nУровень.\nФракции.\nНедвижимость.\nРаботы.\nБолее подробная информация.","Читать","Выйти");
+	}
 	return true;
 }
 
