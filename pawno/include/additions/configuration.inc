@@ -1,5 +1,5 @@
 #undef MAX_PLAYERS
-#define MAX_PLAYERS 300
+#define MAX_PLAYERS 100
 
 #define SITE_LINK "www.orio-n.com"
 //#define SITE_MAIL "admin@d1maz.ru"
