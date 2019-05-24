@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Хост: localhost
--- Время создания: Апр 25 2019 г., 06:13
+-- Время создания: Май 24 2019 г., 12:13
 -- Версия сервера: 8.0.12
 -- Версия PHP: 7.2.11
 
@@ -38,8 +38,16 @@ CREATE TABLE `users` (
   `character` smallint(3) NOT NULL DEFAULT '23',
   `money` int(11) NOT NULL DEFAULT '20000',
   `bankmoney` int(11) NOT NULL DEFAULT '75000',
-  `dateofregister` varchar(10) NOT NULL DEFAULT '01.01.1970'
+  `dateofregister` varchar(10) NOT NULL DEFAULT '01.01.1970',
+  `lastpos` varchar(50) NOT NULL DEFAULT '0.0|0.0|0.0|0.0|0|0'
 ) ENGINE=InnoDB DEFAULT CHARSET=cp1251;
+
+--
+-- Дамп данных таблицы `users`
+--
+
+INSERT INTO `users` (`id`, `name`, `password`, `email`, `referal`, `gender`, `character`, `money`, `bankmoney`, `dateofregister`, `lastpos`) VALUES
+(1, 'd1maz.', '123456', 'admin@d1maz.ru', '', 1, 23, 20000, 75000, '25.4.2019', '0.0|0.0|0.0|0.0|0|0');
 
 --
 -- Индексы сохранённых таблиц
@@ -59,7 +67,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT для таблицы `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
