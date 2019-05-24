@@ -100,6 +100,16 @@ public OnPlayerRequestClass(playerid,classid){
 }
 
 public OnPlayerDisconnect(playerid,reason){
+	if(GetPVarInt(playerid,"PlayerLogged")){
+		new Float:temp_x,Float:temp_y,Float:temp_z,Float:temp_fa,temp_interior,temp_virtualworld;
+		GetPlayerPos(playerid,temp_x,temp_y,temp_z);
+		GetPlayerFacingAngle(playerid,temp_fa);
+		GetPlayerInterior(playerid,temp_interior);
+		GetPlayerVirtualWorld(playerid,temp_z);
+		new query[60-2-2+50+11];
+		mysql_format(mysql_connection,query,sizeof(query),"update`users`set`lastpos`='%f|%f|%f|%f|%i|%i'where`id`='%i'",temp_x,temp_y,temp_z,temp_fa,temp_interior,temp_virtualworld,user[playerid][id]);
+		mysql_query(mysql_connection,query,false);
+	}
 	for(new sr:i; i < sr; i++){
 		user[playerid][i]=EOS;
 	}
@@ -412,6 +422,22 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]){
 				ShowPlayerDialog(playerid,dHelp,DIALOG_STYLE_LIST,"Помощь","Команды и чат.\nУровень.\nФракции.\nНедвижимость.\nРаботы.\nБолее подробная информация.","Читать","Выйти");
 			}
 		}
+		case dLastPos:{
+			if(response){
+				if(GetPVarInt(playerid,"LastPosSpawn")){
+					SetPlayerPos(playerid,GetPVarFloat(playerid,"LastPosX"),GetPVarFloat(playerid,"LastPosY"),GetPVarFloat(playerid,"LastPosZ"));
+					SetPlayerFacingAngle(playerid,GetPVarFloat(playerid,"LastPosFA"));
+					SetPlayerInterior(playerid,GetPVarInt(playerid,"LastPosInterior"));
+					SetPlayerVirtualWorld(playerid,GetPVarInt(playerid,"LastPosVirtualWorld"));
+					DeletePVar(playerid,"LastPosX");
+					DeletePVar(playerid,"LastPosY");
+					DeletePVar(playerid,"LastPosZ");
+					DeletePVar(playerid,"LastPosFA");
+					DeletePVar(playerid,"LastPosInterior");
+					DeletePVar(playerid,"LastPosVirtualWorld");
+				}
+			}
+		}
 	}
 	return true;
 }
@@ -419,6 +445,10 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]){
 public OnPlayerSpawn(playerid){
 	if(!GetPVarInt(playerid,"PlayerLogged")){
 		Kick(playerid);
+	}
+	if(GetPVarInt(playerid,"LastPosSpawn")){
+		ShowPlayerDialog(playerid,dLastPos,DIALOG_STYLE_MSGBOX,"Телепорт","","Да","Нет");
+		DeletePVar(playerid, "LastPosSpawn");
 	}
 	SetPlayerPos(playerid,-1966.1068,121.8472,27.6875);
 	SetPlayerFacingAngle(playerid,90.0);
@@ -471,6 +501,13 @@ loadUser(playerid,Cache:cache_users){
 	user[playerid][character]=cache_get_field_content_int(0,"character",mysql_connection);
 	user[playerid][money]=cache_get_field_content_int(0,"money",mysql_connection);
 	user[playerid][bankmoney]=cache_get_field_content_int(0,"bankmoney",mysql_connection);
+	new temp_lastpos[50];
+	cache_get_field_count_content(0,"lastpos",temp_lastpos,mysql_connection,sizeof(temp_lastpos));
+	new Float:temp_x,Float:temp_y,Float:temp_z,Float:temp_fa,temp_interior,temp_virtualworld;
+	sscanf(temp_lastpos,"p<|>ffffii",temp_x,temp_y,temp_z,temp_fa,temp_interior,temp_virtualworld);
+	if(temp_x != 0 && temp_y != 0 && temp_z != 0){
+		SetPVarInt(playerid,"LastPosSpawn");
+	}
 }
 
 forward kick_player(playerid);
