@@ -75,7 +75,7 @@ public OnGameModeInit(){
 	SendRconCommand("hostname Orio[N] RPG 2 (0.3.7) Rus/Ua");
 	SendRconCommand("weburl "SITE_LINK"");
 	SendRconCommand("language Russian");
-	SetGameModeText("Orio[N] RP/RPG v0.017r1");
+	SetGameModeText("Orio[N] RP/RPG v0.020r1");
 	return true; 
 }
 
@@ -425,7 +425,7 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]){
 		}
 		case dLastPos:{
 			if(response){
-				if(GetPVarInt(playerid,"LastPosSpawn")){
+				if(GetPVarFloat(playerid,"LastPosX")){
 					SetPlayerPos(playerid,GetPVarFloat(playerid,"LastPosX"),GetPVarFloat(playerid,"LastPosY"),GetPVarFloat(playerid,"LastPosZ"));
 					SetPlayerFacingAngle(playerid,GetPVarFloat(playerid,"LastPosFA"));
 					SetPlayerInterior(playerid,GetPVarInt(playerid,"LastPosInterior"));
@@ -448,8 +448,8 @@ public OnPlayerSpawn(playerid){
 		Kick(playerid);
 	}
 	if(GetPVarInt(playerid,"LastPosSpawn")){
-		ShowPlayerDialog(playerid,dLastPos,DIALOG_STYLE_MSGBOX,"Телепорт","","Да","Нет");
-		DeletePVar(playerid, "LastPosSpawn");
+		ShowPlayerDialog(playerid,dLastPos,DIALOG_STYLE_MSGBOX,"Телепорт","\n\n\n\n"WHITE"Вернуться на место прошлого выхода из игры?\n\n\n","Да","Нет");
+		DeletePVar(playerid,"LastPosSpawn");
 	}
 	SetPlayerPos(playerid,-1966.1068,121.8472,27.6875);
 	SetPlayerFacingAngle(playerid,90.0);
@@ -506,7 +506,13 @@ loadUser(playerid,Cache:cache_users){
 	cache_get_field_content(0,"lastpos",temp_lastpos,mysql_connection,sizeof(temp_lastpos));
 	new Float:temp_x,Float:temp_y,Float:temp_z,Float:temp_fa,temp_interior,temp_virtualworld;
 	sscanf(temp_lastpos,"p<|>ffffii",temp_x,temp_y,temp_z,temp_fa,temp_interior,temp_virtualworld);
-	if(!temp_x && !temp_y && !temp_z){
+	if(temp_x && temp_y && temp_z){
+		SetPVarFloat(playerid,"LastPosX",temp_x);
+		SetPVarFloat(playerid,"LastPosY",temp_y);
+		SetPVarFloat(playerid,"LastPosZ",temp_z);
+		SetPVarFloat(playerid,"LastPosFA",temp_fa);
+		SetPVarInt(playerid,"LastPosInterior",temp_interior);
+		SetPVarInt(playerid,"LastPosVirtualWorld",temp_virtualworld);
 		SetPVarInt(playerid,"LastPosSpawn",1);
 	}
 }
