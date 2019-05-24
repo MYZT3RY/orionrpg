@@ -55,7 +55,8 @@ enum dlgs{
 	dAuthorizationRestore,
 	dAuthorizationRestoreCode,
 	dHelp,
-	dHelpAddition
+	dHelpAddition,
+	dLastPos
 }
 
 public OnGameModeInit(){
@@ -104,8 +105,8 @@ public OnPlayerDisconnect(playerid,reason){
 		new Float:temp_x,Float:temp_y,Float:temp_z,Float:temp_fa,temp_interior,temp_virtualworld;
 		GetPlayerPos(playerid,temp_x,temp_y,temp_z);
 		GetPlayerFacingAngle(playerid,temp_fa);
-		GetPlayerInterior(playerid,temp_interior);
-		GetPlayerVirtualWorld(playerid,temp_z);
+		temp_interior=GetPlayerInterior(playerid);
+		temp_virtualworld=GetPlayerVirtualWorld(playerid);
 		new query[60-2-2+50+11];
 		mysql_format(mysql_connection,query,sizeof(query),"update`users`set`lastpos`='%f|%f|%f|%f|%i|%i'where`id`='%i'",temp_x,temp_y,temp_z,temp_fa,temp_interior,temp_virtualworld,user[playerid][id]);
 		mysql_query(mysql_connection,query,false);
@@ -502,11 +503,11 @@ loadUser(playerid,Cache:cache_users){
 	user[playerid][money]=cache_get_field_content_int(0,"money",mysql_connection);
 	user[playerid][bankmoney]=cache_get_field_content_int(0,"bankmoney",mysql_connection);
 	new temp_lastpos[50];
-	cache_get_field_count_content(0,"lastpos",temp_lastpos,mysql_connection,sizeof(temp_lastpos));
+	cache_get_field_content(0,"lastpos",temp_lastpos,mysql_connection,sizeof(temp_lastpos));
 	new Float:temp_x,Float:temp_y,Float:temp_z,Float:temp_fa,temp_interior,temp_virtualworld;
 	sscanf(temp_lastpos,"p<|>ffffii",temp_x,temp_y,temp_z,temp_fa,temp_interior,temp_virtualworld);
-	if(temp_x != 0 && temp_y != 0 && temp_z != 0){
-		SetPVarInt(playerid,"LastPosSpawn");
+	if(!temp_x && !temp_y && !temp_z){
+		SetPVarInt(playerid,"LastPosSpawn",1);
 	}
 }
 
