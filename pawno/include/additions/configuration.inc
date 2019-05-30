@@ -7,3 +7,5 @@
 #define SITE_MAIL "support@orio-n.com"
 #define IP_SERVER "127.0.0.1:7777"
 #define VK_LINK "vk.com/orionservers"
+
+#define LICENSE_DRIVING 0//лицензия на вождение транспорта
