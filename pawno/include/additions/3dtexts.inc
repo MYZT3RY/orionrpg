@@ -8,3 +8,5 @@ Create3DTexts(){
 	CreateDynamic3DTextLabel("Введи "SUNBURN"/taketest"WHITE" для начала урока",-1,-2026.7585,-114.3428,1035.1719,50.0,INVALID_PLAYER_ID,INVALID_VEHICLE_ID,1,-1,3);
 	CreateDynamic3DTextLabel("|------ Продажа лицензий ------|",-1,-2022.2257,-116.7993,1035.1719,50.0,INVALID_PLAYER_ID,INVALID_VEHICLE_ID,1,-1,3);
 }
+
+//PAWN
