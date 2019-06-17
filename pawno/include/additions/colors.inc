@@ -8,6 +8,7 @@
 #define YELLOW_GREEN "{9acd32}"
 #define SUNBURN "{d7b481}"
 #define LIGHT_STEEL_BLUE "{a9c4e4}"
+#define BRILLIAN_AZURE "{33ccff}"
 
 #define C_GREY 0xAFAFAFAA
 #define C_YELLOW_GREEN 0x9ACD32AA
