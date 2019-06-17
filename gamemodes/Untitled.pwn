@@ -1,4 +1,4 @@
-// Orion RPG by d1maz.
+// Orion RPG by d1maz. - vk.com/d1maz.community
 
 #include <a_samp>
 #include <a_mysql>
@@ -13,6 +13,7 @@
 #include <additions/3dtexts>
 #include <additions/colors>
 #include <additions/configuration>
+#include <dc_cmd>
 
 // подключение к базе данных.
 
@@ -39,7 +40,9 @@ enum sr{
 	character,
 	money,
 	bankmoney,
-	dateofregister[10]
+	dateofregister[10],
+	licenses[MAX_LICENSES],
+	changerespawn
 }
 
 new user[MAX_PLAYERS][sr];
@@ -56,8 +59,15 @@ enum dlgs{
 	dAuthorizationRestoreCode,
 	dHelp,
 	dHelpAddition,
-	dLastPos
+	dLastPos,
+	dBuyLicenses
 }
+
+// переменные
+
+new infoAboutLicenses[][]={{120000,2},{200000,3},{50000,1},{100000,2}};
+
+//
 
 public OnGameModeInit(){
 	mysql_connection = mysql_connect(MYSQL_HOST,MYSQL_USER,MYSQL_DATABASE,MYSQL_PASSWORD);
@@ -70,12 +80,13 @@ public OnGameModeInit(){
 			return true;
 		}
 	}
+	DisableInteriorEnterExits();
 	Create3DTexts();
 	CreatePickups();
 	SendRconCommand("hostname Orio[N] RPG 2 (0.3.7) Rus/Ua");
 	SendRconCommand("weburl "SITE_LINK"");
 	SendRconCommand("language Russian");
-	SetGameModeText("Orio[N] RP/RPG v0.020r1");
+	SetGameModeText("Orio[N] RP/RPG v0.023r1");
 	return true; 
 }
 
@@ -430,12 +441,46 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]){
 					SetPlayerFacingAngle(playerid,GetPVarFloat(playerid,"LastPosFA"));
 					SetPlayerInterior(playerid,GetPVarInt(playerid,"LastPosInterior"));
 					SetPlayerVirtualWorld(playerid,GetPVarInt(playerid,"LastPosVirtualWorld"));
+					new temp_command[41-2+9];
+					format(temp_command,sizeof(temp_command),"/me %s на место прошлого выхода из игры.",user[playerid][gender]?"вернулся":"вернулась");
+					cmd::me(playerid,temp_command);
 					DeletePVar(playerid,"LastPosX");
 					DeletePVar(playerid,"LastPosY");
 					DeletePVar(playerid,"LastPosZ");
 					DeletePVar(playerid,"LastPosFA");
 					DeletePVar(playerid,"LastPosInterior");
 					DeletePVar(playerid,"LastPosVirtualWorld");
+				}
+			}
+		}
+		case dBuyLicenses:{
+			if(response){
+				if(user[playerid][licenses][listitem+1]){
+
+				}
+				else{
+					if(user[playerid][money] >= infoAboutLicenses[listitem][0]){
+						//if(user[playerid][level] >= infoAboutLicenses[listitem][1]){
+							user[playerid][licenses][listitem+1]=1;
+							givePlayerMoney(playerid,infoAboutLicenses[listitem][0]);
+							new temp[(3-2+1)*MAX_LICENSES];
+							for(new i=0; i<MAX_LICENSES; i++){
+								strcat(temp,user[playerid][licenses][i]);
+								if(i != MAX_LICENSES-1){
+									strcat(temp,"|");
+								}
+							}
+							new query[59-2-2-2+sizeof(temp)+11+11];
+							mysql_format(mysql_connection,query,sizeof(query),"update`users`set`licenses`='%e',`money`='%i'where`id`='%i'",temp,user[playerid][money],user[playerid][id]);							
+							mysql_query(mysql_connection,query,false);
+						/*}
+						else{
+							SendClientMessage(playerid,-1,"LVL");//to do
+						}*/
+					}
+					else{
+						SendClientMessage(playerid,C_GREY,""RED"x"GREY" Для покупки данной лицензии у тебя не хватает денег.");
+					}
 				}
 			}
 		}
@@ -451,8 +496,23 @@ public OnPlayerSpawn(playerid){
 		ShowPlayerDialog(playerid,dLastPos,DIALOG_STYLE_MSGBOX,"Телепорт","\n\n\n\n"WHITE"Вернуться на место прошлого выхода из игры?\n\n\n","Да","Нет");
 		DeletePVar(playerid,"LastPosSpawn");
 	}
-	SetPlayerPos(playerid,-1966.1068,121.8472,27.6875);
-	SetPlayerFacingAngle(playerid,90.0);
+	switch(user[playerid][changerespawn]){
+		case 1:{// вокзал сан фиерро
+			SetPlayerPos(playerid,-1966.1068,121.8472,27.6875);
+			SetPlayerFacingAngle(playerid,90.0);
+			SetPlayerInterior(playerid,0);
+			SetPlayerVirtualWorld(playerid,0);
+		}
+		case 2:{// отель лос сантос
+			SetPlayerPos(playerid,2268.0000,1629.7000,1084.2438);
+			SetPlayerFacingAngle(playerid,0.0);
+			SetPlayerInterior(playerid,1);
+			SetPlayerVirtualWorld(playerid,0);
+		}
+		default:{
+			Kick(playerid);
+		}
+	}
 	SetPlayerSkin(playerid,user[playerid][character]);
 	GivePlayerMoney(playerid,user[playerid][money]);
 	SetCameraBehindPlayer(playerid);
@@ -462,6 +522,34 @@ public OnPlayerSpawn(playerid){
 public OnPlayerPickUpDynamicPickup(playerid, STREAMER_TAG_PICKUP:pickupid){
 	if(pickupid == pickup_help){
 		ShowPlayerDialog(playerid,dHelp,DIALOG_STYLE_LIST,"Помощь","Команды и чат.\nУровень.\nФракции.\nНедвижимость.\nРаботы.\nБолее подробная информация.","Читать","Выйти");
+	}
+	else if(pickupid == pickup_enter_driving_school){
+		if(!user[playerid][licenses][LICENSE_DRIVING]){
+			ShowPlayerDialog(playerid,NULL,DIALOG_STYLE_MSGBOX,"Информация Автошколы",""WHITE"* Для начала экзамена подойди к монитору и введи команду "GREEN"/taketest"WHITE" *\n\n\nДля ввода команд используй"GREEN" F6\n","ОК","");
+		}
+		SetPlayerPos(playerid,-2029.5052,-105.1260,1035.1719);
+		SetPlayerFacingAngle(playerid,180.0);
+		SetPlayerInterior(playerid,3);
+	}
+	else if(pickupid == pickup_exit_driving_school){
+		SetPlayerPos(playerid,-2026.5930,-99.1141,35.1641);
+		SetPlayerFacingAngle(playerid,0.0);
+		SetPlayerInterior(playerid,0);
+	}
+	else if(pickupid == pickup_buy_licenses){
+		ShowPlayerDialog(playerid,dBuyLicenses,DIALOG_STYLE_LIST,"Покупка лицензий","Лицензия на ношение оружия (2LvL+120000$)\nЛицензия на управление воздушным транспортом (3LvL+200000$)\nЛицензия на мото транспорт (1LvL+50000$)\nЛицензия на водный транспорт (2LvL+100000$)","Купить","Отмена");
+		SetPlayerPos(playerid,-2024.2720,-118.8759,1035.1719);
+		SetPlayerFacingAngle(playerid,270.0);
+	}
+	else if(pickupid == pickup_enter_to_hotel){
+		SetPlayerPos(playerid,2268.4277,1649.6089,1084.2344);
+		SetPlayerFacingAngle(playerid,13.4270);
+		SetPlayerInterior(playerid,1);
+	}
+	else if(pickupid ==  pickup_exit_from_hotel){
+		SetPlayerPos(playerid,1286.5206,-1274.7014,13.5397);
+		SetPlayerFacingAngle(playerid,94.8944);
+		SetPlayerInterior(playerid,0);
 	}
 	return true;
 }
@@ -496,28 +584,116 @@ showRestoreUserCodeDialog(playerid){
 
 loadUser(playerid,Cache:cache_users){
 	cache_set_active(cache_users,mysql_connection);
-	cache_get_field_content(0,"email",user[playerid][email],mysql_connection,32);
-	cache_get_field_content(0,"referal",user[playerid][referal],mysql_connection,MAX_PLAYER_NAME);
-	user[playerid][gender]=cache_get_field_content_int(0,"gender",mysql_connection);
-	user[playerid][character]=cache_get_field_content_int(0,"character",mysql_connection);
-	user[playerid][money]=cache_get_field_content_int(0,"money",mysql_connection);
-	user[playerid][bankmoney]=cache_get_field_content_int(0,"bankmoney",mysql_connection);
-	new temp_lastpos[50];
-	cache_get_field_content(0,"lastpos",temp_lastpos,mysql_connection,sizeof(temp_lastpos));
-	new Float:temp_x,Float:temp_y,Float:temp_z,Float:temp_fa,temp_interior,temp_virtualworld;
-	sscanf(temp_lastpos,"p<|>ffffii",temp_x,temp_y,temp_z,temp_fa,temp_interior,temp_virtualworld);
-	if(temp_x && temp_y && temp_z){
-		SetPVarFloat(playerid,"LastPosX",temp_x);
-		SetPVarFloat(playerid,"LastPosY",temp_y);
-		SetPVarFloat(playerid,"LastPosZ",temp_z);
-		SetPVarFloat(playerid,"LastPosFA",temp_fa);
-		SetPVarInt(playerid,"LastPosInterior",temp_interior);
-		SetPVarInt(playerid,"LastPosVirtualWorld",temp_virtualworld);
-		SetPVarInt(playerid,"LastPosSpawn",1);
+	if(cache_get_row_count(mysql_connection)){
+		cache_get_field_content(0,"email",user[playerid][email],mysql_connection,32);
+		cache_get_field_content(0,"referal",user[playerid][referal],mysql_connection,MAX_PLAYER_NAME);
+		user[playerid][gender]=cache_get_field_content_int(0,"gender",mysql_connection);
+		user[playerid][character]=cache_get_field_content_int(0,"character",mysql_connection);
+		user[playerid][money]=cache_get_field_content_int(0,"money",mysql_connection);
+		user[playerid][bankmoney]=cache_get_field_content_int(0,"bankmoney",mysql_connection);
+		new temp_lastpos[50];
+		cache_get_field_content(0,"lastpos",temp_lastpos,mysql_connection,sizeof(temp_lastpos));
+		new Float:temp_x,Float:temp_y,Float:temp_z,Float:temp_fa,temp_interior,temp_virtualworld;
+		sscanf(temp_lastpos,"p<|>ffffii",temp_x,temp_y,temp_z,temp_fa,temp_interior,temp_virtualworld);
+		if(temp_x && temp_y && temp_z){
+			SetPVarFloat(playerid,"LastPosX",temp_x);
+			SetPVarFloat(playerid,"LastPosY",temp_y);
+			SetPVarFloat(playerid,"LastPosZ",temp_z);
+			SetPVarFloat(playerid,"LastPosFA",temp_fa);
+			SetPVarInt(playerid,"LastPosInterior",temp_interior);
+			SetPVarInt(playerid,"LastPosVirtualWorld",temp_virtualworld);
+			SetPVarInt(playerid,"LastPosSpawn",1);
+		}
+		new temp_licenses[MAX_LICENSES*3];
+		cache_get_field_content(0,"licenses",temp_licenses,mysql_connection,sizeof(temp_licenses));
+		new temp_sscanf[13-2+1];		
+		format(temp_sscanf,sizeof(temp_sscanf),"p<|>a<i>[%i]",MAX_LICENSES);
+		sscanf(temp_licenses,temp_sscanf,user[playerid][licenses]);
 	}
 }
 
 forward kick_player(playerid);
 public kick_player(playerid){
 	Kick(playerid);
+}
+
+forward OnPlayerCommandReceived(playerid, cmdtext[]);
+public OnPlayerCommandReceived(playerid, cmdtext[]){
+    if(!GetPVarInt(playerid,"PlayerLogged")){
+        return false;
+    }
+    return true;
+}
+
+ProxDetector(Float:radi, playerid, const string[],col1,col2,col3,col4,col5){
+	if(GetPVarInt(playerid,"PlayerLogged")){
+		new Float:posx, Float:posy, Float:posz;
+		new Float:oldposx, Float:oldposy, Float:oldposz;
+		new Float:tempposx, Float:tempposy, Float:tempposz;
+		GetPlayerPos(playerid, oldposx, oldposy, oldposz);
+		for(new i=0; i<MAX_PLAYERS; i++){
+			GetPlayerPos(i, posx, posy, posz);
+			tempposx = (oldposx -posx);
+			tempposy = (oldposy -posy);
+			tempposz = (oldposz -posz);
+			if (((tempposx < radi/16) && (tempposx > -radi/16)) && ((tempposy < radi/16) && (tempposy > -radi/16)) && ((tempposz < radi/16) && (tempposz > -radi/16))){
+				SendClientMessage(i, col1, string);
+			}
+			else if (((tempposx < radi/8) && (tempposx > -radi/8)) && ((tempposy < radi/8) && (tempposy > -radi/8)) && ((tempposz < radi/8) && (tempposz > -radi/8))){
+				SendClientMessage(i, col2, string);
+			}
+			else if (((tempposx < radi/4) && (tempposx > -radi/4)) && ((tempposy < radi/4) && (tempposy > -radi/4)) && ((tempposz < radi/4) && (tempposz > -radi/4))){
+				SendClientMessage(i, col3, string);
+			}
+			else if (((tempposx < radi/2) && (tempposx > -radi/2)) && ((tempposy < radi/2) && (tempposy > -radi/2)) && ((tempposz < radi/2) && (tempposz > -radi/2))){
+				SendClientMessage(i, col4, string);
+			}
+			else if (((tempposx < radi) && (tempposx > -radi)) && ((tempposy < radi) && (tempposy > -radi)) && ((tempposz < radi) && (tempposz > -radi))){
+				SendClientMessage(i, col5, string);
+			}
+		}
+	}
+	return true;
+}
+
+givePlayerMoney(playerid,value){
+	if(GetPVarInt(playerid,"PlayerLogged")){
+		ResetPlayerMoney(playerid);
+		user[playerid][money]+=value;
+		GivePlayerMoney(playerid,user[playerid][money]);
+	}
+}
+
+// Команды игроков
+
+CMD:me(playerid,params[]){
+	new temp_text[128];
+	if(sscanf(params,"s[128]",temp_text)){
+		SendClientMessage(playerid,C_GREY,"Используй: /me [действие]");
+		return true;
+	}
+	new string[6-2-2+MAX_PLAYER_NAME+128];
+	format(string,sizeof(string),"%s %s",user[playerid][name],temp_text);	
+	ProxDetector(25.0,playerid,string,C_PURPLE,C_PURPLE,C_PURPLE,C_PURPLE,C_PURPLE);
+	return true;
+}
+
+CMD:changerespawn(playerid){
+	if(user[playerid][licenses][LICENSE_DRIVING]){
+		if(IsPlayerInRangeOfPoint(playerid,5.0,-1976.5925,141.8520,27.6875) || IsPlayerInRangeOfPoint(playerid,5.0,1285.1329,-1272.0217,13.5381)){//SF
+			user[playerid][changerespawn]=(user[playerid][changerespawn]==1)?2:1;
+			SendClientMessage(playerid,-1,(user[playerid][changerespawn]==1)?"Теперь вы будешь возрождаться на вокзале "GREEN"San Fierro"WHITE".":"Теперь ты будешь возрождаться в отеле "GREEN"Los Santos"WHITE".");
+		}
+		new query[51-2-2+1+11];
+		mysql_format(mysql_connection,query,sizeof(query),"update`users`set`changerespawn`='%i'where`id`='%i'",user[playerid][changerespawn],user[playerid][id]);		
+		mysql_query(mysql_connection,query,false);
+	}
+	else{
+		SendClientMessage(playerid,-1,"");
+		SendClientMessage(playerid,-1,"");
+		SendClientMessage(playerid,C_GREY,""RED"x"GREY" Ты не можешь сменить место спавна! Тебе необходимо сначала получить водительские права.");
+		SendClientMessage(playerid,-1,"Набери "GREEN"/kpk"WHITE", выбери пункты [ GPS навигатор - Важные места - Автошкола ].");
+		SendClientMessage(playerid,-1,"");
+	}
+	return true;
 }
